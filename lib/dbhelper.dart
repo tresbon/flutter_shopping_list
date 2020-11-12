@@ -4,6 +4,13 @@ import 'models/list_items.dart';
 import 'models/shopping_list.dart';
 
 class DbHelper {
+  static final DbHelper _dbHelper = DbHelper._internal();
+
+  DbHelper._internal();
+
+  factory DbHelper() {
+    return _dbHelper;
+  }
   final int version = 1;
   Database db;
   static const tableLists = """
@@ -18,20 +25,19 @@ class DbHelper {
   note TEXT);
   """;
 
-  Future <Database> openDb() async {
+  Future<Database> openDb() async {
     if (db == null) {
       db = await openDatabase(join(await getDatabasesPath(), 'shopping.db'),
           onCreate: (database, version) {
         database.execute(tableLists);
-        print('lists created');
         database.execute(tableItems);
-        print('items created');
       }, version: version);
     }
     return db;
   }
 
   Future<int> insertList(ShoppingList list) async {
+    openDb();
     int id = await this.db.insert(
           'lists',
           list.toMap(),
@@ -41,6 +47,7 @@ class DbHelper {
   }
 
   Future<int> insertItem(ListItem item) async {
+    openDb();
     int id = await db.insert(
       'items',
       item.toMap(),
@@ -49,13 +56,24 @@ class DbHelper {
     return id;
   }
 
-  Future <List<ShoppingList>> getLists() async {
+  Future<List<ShoppingList>> getLists() async {
     final List<Map<String, dynamic>> maps = await db.query('lists');
     return List.generate(maps.length, (i) {
-      return ShoppingList(
-          maps[i]['id'],
-          maps[i]['name'],
-          maps[i]['priority']);
+      return ShoppingList(maps[i]['id'], maps[i]['name'], maps[i]['priority']);
+    });
+  }
+
+  Future<List<ListItem>> getItems(int idList) async {
+    final List<Map<String, dynamic>> maps =
+        await db.query('items', where: 'idList = ?', whereArgs: [idList]);
+    return List.generate(maps.length, (i) {
+      return ListItem(
+        maps[i]['id'],
+        maps[i]['idList'],
+        maps[i]['name'],
+        maps[i]['quantity'],
+        maps[i]['note'],
+      );
     });
   }
 }
