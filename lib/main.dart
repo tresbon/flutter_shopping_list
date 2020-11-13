@@ -3,6 +3,7 @@ import 'dbhelper.dart';
 import './models/list_items.dart';
 import './models/shopping_list.dart';
 import './ui/items_screen.dart';
+import './ui/shopping_list_dialog.dart';
 
 void main() => runApp(MyApp());
 
@@ -14,11 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Scaffold(
-          appBar: AppBar(
-            title: Text('Shopping List'),
-          ),
-          body: ShList()),
+      home: ShList(),
     );
   }
 }
@@ -31,34 +28,75 @@ class ShList extends StatefulWidget {
 class _ShListState extends State<ShList> {
   List<ShoppingList> shoppingList;
   DbHelper helper;
+  ShoppingListDialog dialog;
 
   @override
   void initState() {
-    helper = DbHelper();
-    helper.openDb();
+    dialog = ShoppingListDialog();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     showData();
-    return ListView.builder(
-      itemCount: (shoppingList != null) ? shoppingList.length : 0,
-      itemBuilder: (BuildContext context, int index) {
-        return ListTile(
-          title: Text(shoppingList[index].name),
-          leading: CircleAvatar(child: Text(shoppingList[index].priority.toString()),),
-            trailing: IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: (){},
-            ),
-          onTap: (){
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ItemsScreen(shoppingList[index])),
-            );},
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Shopping List'),
+      ),
+      body: ListView.builder(
+        itemCount: (shoppingList != null) ? shoppingList.length : 0,
+        itemBuilder: (BuildContext context, int index) {
+          return Dismissible(
+              key: Key(shoppingList[index].name),
+              onDismissed: (direction) {
+                String strName = shoppingList[index].name;
+                helper.deleteList(shoppingList[index]);
+                setState(() {
+                  shoppingList.removeAt(index);
+                });
+                Scaffold
+                    .of(context)
+                    .showSnackBar(SnackBar(content: Text("$strName deleted"),));
+              },
+              child: ListTile(
+                title: Text(shoppingList[index].name),
+                leading: CircleAvatar(
+                  child: Text(shoppingList[index].priority.toString()),
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) =>
+                          dialog.buildDialog(
+                              context, shoppingList[index], false),
+                    );
+                  },
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ItemsScreen(shoppingList[index])),
+                  );
+                },
+              ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) =>
+                dialog.buildDialog(context, ShoppingList(0, '',
+                    0), true),
+          );
+        },
+        child: Icon(Icons.add),
+        backgroundColor: Colors.pink,
+      ),
     );
   }
 
@@ -79,6 +117,6 @@ class _ShListState extends State<ShList> {
     ListItem item = ListItem(0, listId, 'Bread', 'note', '1 kg');
     int itemId = await helper.insertItem(item);
     print('List Id: ' + listId.toString());
-    print('Item Id: '+ itemId.toString());
+    print('Item Id: ' + itemId.toString());
   }
 }
