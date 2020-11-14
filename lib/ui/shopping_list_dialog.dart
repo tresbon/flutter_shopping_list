@@ -14,38 +14,36 @@ class ShoppingListDialog {
     }
     return AlertDialog(
       title: Text((isNew) ? 'Create' : 'Edit'),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30.0)
-        ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
       content: SingleChildScrollView(
         child: Column(
           children: <Widget>[
             TextField(
-                controller: txtName,
-                decoration: InputDecoration(
-                    hintText: 'Shopping List Name',
-                  labelText: "Product",
-                  icon: Icon(Icons.shopping_cart),
-                )
+              controller: txtName,
+              decoration: InputDecoration(
+                hintText: 'Shopping List Name',
+                labelText: "Product",
+                icon: Icon(Icons.shopping_cart),
+              ),
             ),
             TextField(
               controller: txtPriority,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                  hintText: 'Shopping List Priority (1-3)',
+                hintText: 'Shopping List Priority (1-3)',
                 labelText: 'Priority',
                 icon: Icon(Icons.north),
               ),
             ),
             RaisedButton(
               child: Text('Save Shopping List'),
-              onPressed: (){
+              onPressed: () {
                 list.name = txtName.text;
                 list.priority = int.parse(txtPriority.text);
                 helper.insertList(list);
                 Navigator.pop(context);
-              },),
-
+              },
+            ),
           ],
         ),
       ),
